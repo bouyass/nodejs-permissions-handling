@@ -1,11 +1,13 @@
 const express = require('express')
 const router = express.Router()
-const { projects } = require('../data')
+const { projects, ROLE } = require('../data')
 const {authUser} = require("../basicAuth")
 const {canViewProject} = require('../permissions/project')
 
-router.get('/', (req, res) => {
-  res.json(projects)
+
+
+router.get('/',authUser, filterByRole, (req, res) => {
+  res.json(req.projects)
 })
 
 router.get('/:projectId', setProject, authUser, authGetProject , (req, res) => {
@@ -23,6 +25,11 @@ function setProject(req, res, next) {
   next()
 }
 
+
+function filterByRole(req, re, next){
+    req.user.role !== ROLE.ADMIN  ? req.projects = projects.filter(item => item.userId === req.user.id) : req.projects = projects
+    next()
+}
 
 function authGetProject(req,res,next){
     if(!canViewProject(req.user, req.project)){
